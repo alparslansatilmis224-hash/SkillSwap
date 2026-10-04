@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SkillSwap - Yetenek Takası ve Öğrenme Ağı{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- NAVBAR -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'home' %}" class="flex items-center space-x-2.5 group">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 group-hover:scale-105 transition duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-brand-700 to-indigo-600 bg-clip-text text-transparent">SkillSwap</span>
+                            <span class="text-[10px] uppercase tracking-widest font-semibold text-slate-400 -mt-1">Yetenek Takas Ağı</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links (Desktop) -->
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'home' %}" class="text-sm font-semibold text-slate-700 hover:text-brand-600 transition">Ana Sayfa</a>
+                    <a href="{% url 'listing_list' %}" class="text-sm font-semibold text-slate-700 hover:text-brand-600 transition">Tüm İlanlar</a>
+                    
+                    <!-- Categories Dropdown -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 text-sm font-semibold text-slate-700 group-hover:text-brand-600 transition py-2">
+                            <span>Kategoriler</span>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-64 rounded-2xl bg-white shadow-xl ring-1 ring-black/5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 p-2 z-50">
+                            {% for cat in all_categories %}
+                                <a href="{% url 'listing_list' %}?category={{ cat.slug }}" class="flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-brand-50 hover:text-brand-700 rounded-xl transition">
+                                    <span>{{ cat.name }}</span>
+                                    <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">{{ cat.listing_count }}</span>
+                                </a>
+                            {% empty %}
+                                <span class="block px-3 py-2 text-xs text-slate-400">Henüz kategori bulunmuyor.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Right Action Buttons -->
+                <div class="hidden md:flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'listing_create' %}" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-brand-50 text-brand-700 hover:bg-brand-100 font-semibold text-sm transition duration-150">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>İlan Ver</span>
+                        </a>
+
+                        <!-- User Profile Link -->
+                        <a href="{% url 'profile' %}" class="flex items-center space-x-3 p-1.5 pr-3 rounded-full hover:bg-slate-100 transition border border-slate-200">
+                            <img class="w-8 h-8 rounded-full object-cover ring-2 ring-brand-500/20" src="{{ user.avatar_url }}" alt="{{ user.username }}">
+                            <span class="text-sm font-semibold text-slate-800">{{ user.get_full_name|default:user.username }}</span>
+                        </a>
+
+                        <a href="{% url 'logout' %}" class="text-sm font-medium text-slate-500 hover:text-rose-600 transition" title="Çıkış Yap">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-sm font-semibold text-slate-700 hover:text-brand-600 transition px-3 py-2">Giriş Yap</a>
+                        <a href="{% url 'register' %}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm shadow-md shadow-brand-500/25 hover:bg-brand-700 transition duration-150">
+                            Kayıt Ol
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center md:hidden">
+                    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-3">
+            <a href="{% url 'home' %}" class="block py-2 text-base font-semibold text-slate-800">Ana Sayfa</a>
+            <a href="{% url 'listing_list' %}" class="block py-2 text-base font-semibold text-slate-800">Tüm İlanlar</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'listing_create' %}" class="block py-2 text-base font-semibold text-brand-600">+ İlan Ver</a>
+                <a href="{% url 'profile' %}" class="block py-2 text-base font-semibold text-slate-800">Profilim & Panel</a>
+                <a href="{% url 'logout' %}" class="block py-2 text-base font-medium text-rose-600">Çıkış Yap</a>
+            {% else %}
+                <div class="pt-4 border-t border-slate-100 flex flex-col space-y-2">
+                    <a href="{% url 'login' %}" class="w-full text-center py-2.5 rounded-xl border border-slate-300 font-semibold text-sm text-slate-700">Giriş Yap</a>
+                    <a href="{% url 'register' %}" class="w-full text-center py-2.5 rounded-xl bg-brand-600 text-white font-semibold text-sm">Kayıt Ol</a>
+                </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+            {% for message in messages %}
+                <div class="flex items-center justify-between p-4 mb-3 rounded-2xl border text-sm font-medium shadow-sm transition-all duration-200 {{ message.tags }}">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-700 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-300 pt-16 pb-12 mt-20 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
+                
+                <!-- Col 1: About -->
+                <div class="md:col-span-1 space-y-4">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-white tracking-tight">SkillSwap</span>
+                    </div>
+                    <p class="text-sm text-slate-400 leading-relaxed">
+                        Paraya ihtiyaç duymadan, yeteneklerini öğreterek yeni beceriler kazanabileceğin Türkiye'nin modern yetenek takas ve öğrenme ağı.
+                    </p>
+                </div>
+
+                <!-- Col 2: Quick Links -->
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider text-white mb-4">Hızlı Bağlantılar</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="{% url 'home' %}" class="hover:text-white transition">Ana Sayfa</a></li>
+                        <li><a href="{% url 'listing_list' %}" class="hover:text-white transition">Tüm Yetenek İlanları</a></li>
+                        <li><a href="{% url 'listing_create' %}" class="hover:text-white transition">İlan Oluştur</a></li>
+                        <li><a href="{% url 'profile' %}" class="hover:text-white transition">Hesabım & Teklifler</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Popular Categories -->
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider text-white mb-4">Popüler Kategoriler</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        {% for cat in all_categories|slice:":5" %}
+                            <li><a href="{% url 'listing_list' %}?category={{ cat.slug }}" class="hover:text-white transition">{{ cat.name }}</a></li>
+                        {% empty %}
+                            <li class="text-slate-500">Yazılım, Tasarım, Dil, Müzik</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Col 4: Platform Guarantee -->
+                <div>
+                    <h4 class="text-sm font-semibold uppercase tracking-wider text-white mb-4">Topluluk Değerleri</h4>
+                    <div class="space-y-3 text-sm text-slate-400">
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">✓</span>
+                            <span>%100 Ücretsiz ve Takas Odaklı</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">✓</span>
+                            <span>Birebir Karşılıklı Mentörlük</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-400 font-bold">✓</span>
+                            <span>Sürekli Büyüyen Yetenek Havuzu</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Copyright -->
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
+                <p>&copy; 2026 SkillSwap Platformu. Tüm hakları saklıdır.</p>
+                <p class="mt-2 sm:mt-0">En iyi Django pratikleri ve modern Tailwind CSS ile hazırlanmıştır.</p>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
